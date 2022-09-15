@@ -1,5 +1,4 @@
-#[macro_use(println)]
-extern crate console;
+use crate::println;
 
 use core::panic::PanicInfo;
 use crate::sbi::shutdown;
