@@ -2,12 +2,13 @@
 OUTPUT_ARCH(riscv)
 ENTRY(_start)
 
-BASE_ADDRESS = 0x10000;
+ASSERT(BASE_ADDRESS, "base_adress must be not zero!")
 
 SECTIONS
 {
     . = BASE_ADDRESS;
     .text : {
+        QUAD(BASE_ADDRESS)
         *(.text.entry)
         *(.text .text.*)
     }
