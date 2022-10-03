@@ -1,7 +1,19 @@
-use crate::batch::run_next_app;
+use crate::task::{
+    mark_current_suspended,
+    mark_current_exited,
+    run_next_task
+};
+
 use crate::println;
 
 pub fn sys_exit(xstate: i32) -> ! {
     println!("[kernel] Application exited with code {}", xstate);
-    run_next_app()
+    mark_current_exited();
+    run_next_task();
+    panic!("Unreachable in sys_exit!");
+}
+pub fn sys_yield() -> isize {
+    mark_current_suspended();
+    run_next_task();
+    0
 }

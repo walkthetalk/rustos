@@ -8,12 +8,18 @@ BINS := $(patsubst $(APP_DIR)/%.rs, $(TARGET_DIR)/%.bin, $(APPS))
 
 OBJDUMP := rust-objdump --arch-name=riscv64
 OBJCOPY := rust-objcopy --binary-architecture=riscv64
-CP := cp 
+CP := cp
 
 TEST ?= 
 
+ifeq ($(MODE), debug)
+PROFILE := dev
+else ifeq ($(MODE), release)
+PROFILE := release
+endif
+
 elf: $(APPS)
-	@cargo build --release
+	@cargo build --profile=$(PROFILE)
 ifeq ($(TEST), 1)
 	@$(CP) $(TARGET_DIR)/usertests $(TARGET_DIR)/initproc
 endif
