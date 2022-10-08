@@ -75,6 +75,7 @@ pub fn load_apps() {
     let app_start = unsafe {
         core::slice::from_raw_parts(num_app_ptr.add(1), num_app + 1)
     };
+
     // clear i-cache first
     unsafe { asm!("fence.i"); }
     // load apps
@@ -85,7 +86,7 @@ pub fn load_apps() {
         let len = app_start[i+1] - app_start[i];
         // load address is emebedded in app
         set_base_i(i, laddr + addr_size);
-        println!("app {} !!! len {:#x}", i, len);
+
         // clear region
         (laddr..laddr + APP_SIZE_LIMIT).for_each(|addr| unsafe {
             (addr as *mut u8).write_volatile(0)

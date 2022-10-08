@@ -1,5 +1,6 @@
 
 ARCH="riscv64gc-unknown-none-elf"
+BOARD=qemu
 ODIR="target/${ARCH}/release"
 
 BL="../bootloader/riscv64-bootloader.bin"
@@ -8,7 +9,7 @@ BL="../bootloader/riscv64-bootloader.bin"
 bin: ${ODIR}/rustos.bin
 
 ${ODIR}/rustos:
-	cargo build --release
+	cargo build --release --features "board_$(BOARD)"
 
 ${ODIR}/rustos.bin: ${ODIR}/rustos
 	rust-objcopy --strip-all $< -O binary $@
