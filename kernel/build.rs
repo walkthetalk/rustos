@@ -41,8 +41,7 @@ _num_app:
     .global app_{0}_end
 app_{0}_start:
     .incbin "{2}{1}.bin"
-app_{0}_end:
-        "#, idx, app_with_extension, TARGET_PATH)?;
+app_{0}_end:"#, idx, app_with_extension, TARGET_PATH)?;
     }
     Ok(())
 }

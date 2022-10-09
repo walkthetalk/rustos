@@ -1,6 +1,9 @@
 #![no_std]
 #![no_main]
 #![feature(panic_info_message)]
+#![feature(alloc_error_handler)]
+
+extern crate alloc;
 
 mod console;
 mod lang_items;
@@ -11,6 +14,7 @@ mod loader;
 mod config;
 mod task;
 mod timer;
+mod mm;
 
 use core::arch::global_asm;
 global_asm!(include_str!("entry.asm"));
@@ -20,6 +24,9 @@ global_asm!(include_str!("link_app.S"));
 pub fn rust_main() -> ! {
     clear_bss();
     println!("[kernel] Hello, world!");
+    mm::init_heap();
+    mm::heap_test();
+    loop {}
     trap::init();
     loader::load_apps();
     trap::enable_interrupt();
