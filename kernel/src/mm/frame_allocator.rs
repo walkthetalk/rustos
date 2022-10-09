@@ -6,17 +6,29 @@ use lazy_static::*;
 use core::fmt::{self, Debug, Formatter};
 use crate::println;
 
-pub struct FrameTracker(PhysPageNum);
+pub struct FrameTracker {
+    pub ppn: PhysPageNum,
+}
+
+impl FrameTracker {
+    pub fn new(ppn: PhysPageNum) -> Self {
+        let bytes_array = ppn.get_bytes_array();
+        for i in bytes_array {
+            *i = 0;
+        }
+        Self { ppn }
+    }
+}
 
 impl Debug for FrameTracker {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_fmt(format_args!("FrameTracker:PPN={:#x}", self.0.0))
+        f.write_fmt(format_args!("FrameTracker:PPN={:#x}", self.ppn.0))
     }
 }
 
 impl Drop for FrameTracker {
     fn drop(&mut self) {
-        frame_dealloc(self.0);
+        frame_dealloc(self.ppn);
     }
 }
 
@@ -92,7 +104,7 @@ pub fn frame_alloc() -> Option<FrameTracker> {
     FRAME_ALLOCATOR
         .lock()
         .alloc()
-        .map(|ppn| FrameTracker(ppn))
+        .map(|ppn| FrameTracker::new(ppn))
 }
 
 fn frame_dealloc(ppn: PhysPageNum) {
