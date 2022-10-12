@@ -1,3 +1,3 @@
 /target
 Cargo.lock
-src/link_app.S
+./src/link_app.S

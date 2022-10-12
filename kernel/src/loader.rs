@@ -1,4 +1,5 @@
 use core::arch::asm;
+use xmas_elf::ElfFile;
 //use core::slice::SlicePattern;
 use crate::trap::TrapContext;
 use crate::task::TaskContext;
@@ -76,6 +77,19 @@ pub fn load_apps() {
         core::slice::from_raw_parts(num_app_ptr.add(1), num_app + 1)
     };
 
+    println!("num_app = {}", num_app);
+    for i in 0..num_app {
+        println!(
+            "app_{} [{:#x}, {:#x}] size={:#x}",
+            i,
+            app_start[i],
+            app_start[i+1],
+            app_start[i+1] - app_start[i]
+        );
+        debug_elf(app_start[i], app_start[i+1]);
+    }
+    loop{}
+
     // clear i-cache first
     unsafe { asm!("fence.i"); }
     // load apps
@@ -111,4 +125,30 @@ pub fn init_app_cx(app_id: usize) -> &'static TaskContext {
         TrapContext::app_init_context(get_base_i(app_id), USER_STACK[app_id].get_sp()),
         TaskContext::goto_restore(),
     )
+}
+
+fn debug_elf(start_addr: usize, end_addr: usize) {
+    let data_array = unsafe {
+        core::slice::from_raw_parts(start_addr as *const u8, end_addr - start_addr)
+    };
+    let elf = ElfFile::new(data_array).unwrap();
+    let elf_header = elf.header;
+    let magic = elf_header.pt1.magic;
+    assert_eq!(magic, [0x7f, 0x45, 0x4c, 0x46], "invalid elf!");
+    let ph_count = elf_header.pt2.ph_count();
+    println!("ph_count = {}", ph_count);
+    for i in 0..ph_count {
+        let ph = elf.program_header(i).unwrap();
+        if ph.get_type().unwrap() == xmas_elf::program::Type::Load {
+            println!(
+                "offset={:#x},va={:#x},pa={:#x},filesz={:#x},memsz={:#x},align={:#x}",
+                ph.offset(),
+                ph.virtual_addr(),
+                ph.physical_addr(),
+                ph.file_size(),
+                ph.mem_size(),
+                ph.align(),
+            );
+        }
+    }
 }

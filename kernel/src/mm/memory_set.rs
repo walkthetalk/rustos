@@ -132,17 +132,18 @@ impl MapArea {
     }
     pub fn map_one(&mut self, page_table: &mut PageTable, vpn: VirtPageNum) {
         let pte_flags = PTEFlags::from_bits(self.map_perm.bits).unwrap();
-        let mut ppn = PhysPageNum(0);
-        match self.map_type {
-            MapType::Identical => {
-                ppn = PhysPageNum(vpn.0);
-            }
-            MapType::Framed => {
-                let frame = frame_alloc().unwrap();
-                ppn = frame.ppn;
-                self.data_frames.insert(vpn, frame);
-            }
-        }
+        let ppn =
+            match self.map_type {
+                MapType::Identical => {
+                    PhysPageNum(vpn.0)
+                }
+                MapType::Framed => {
+                    let frame = frame_alloc().unwrap();
+                    let r = frame.ppn;
+                    self.data_frames.insert(vpn, frame);
+                    r
+                }
+            };
         page_table.map(vpn, ppn, pte_flags);
     }
     pub fn unmap_one(&mut self, page_table: &mut PageTable, vpn: VirtPageNum) {
