@@ -5,13 +5,13 @@ mod page_tables;
 mod memory_set;
 
 use page_tables::{PageTable, PTEFlags};
-use address::VPNRange;
+use address::{VPNRange, StepByOne};
 pub use heap_allocator::init_heap;
 pub use heap_allocator::heap_test;
 pub use address::{PhysAddr, VirtAddr, PhysPageNum, VirtPageNum};
 pub use frame_allocator::{FrameTracker, frame_alloc};
 pub use page_tables::PageTableEntry;
-pub use memory_set::{MemorySet, KERNEL_SPACE};
+pub use memory_set::{MemorySet, KERNEL_SPACE, MapPermission};
 pub use memory_set::remap_test;
 
 pub fn init() {

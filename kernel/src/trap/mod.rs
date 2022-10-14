@@ -1,3 +1,5 @@
+use core::arch::asm;
+
 mod context;
 use core::arch::global_asm;
 use crate::syscall::syscall;
@@ -20,15 +22,17 @@ use riscv::register::{
 use crate::task::{
     exit_current_and_run_next,
     suspend_current_and_run_next,
+    current_user_token,
+    current_trap_cx,
 };
 use crate::timer::set_next_trigger;
+use crate::config::{TRAP_CONTEXT, TRAMPOLINE};
 
 global_asm!(include_str!("trap.S"));
 
 pub fn init() {
-    extern "C" { fn __alltraps(); }
     unsafe {
-        stvec::write(__alltraps as usize, TrapMode::Direct);
+        stvec::write(TRAMPOLINE, TrapMode::Direct);
     }
 }
 
@@ -41,7 +45,8 @@ pub fn enable_timer_interrupt() {
 }
 
 #[no_mangle]
-pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
+pub fn trap_handler() -> ! {
+    let cx = current_trap_cx();
     let scause = scause::read();
     let stval = stval::read();
     match scause.cause() {
@@ -66,7 +71,26 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
             panic!("Unsupported trap {:?}, stval = {:#x}!", scause.cause(), stval);
         }
     }
-    cx
+    trap_return();
 }
 
-pub use context::TrapContext;
+#[no_mangle]
+pub fn trap_return() -> ! {
+    let trap_cx_ptr = TRAP_CONTEXT;
+    let user_satp = current_user_token();
+    extern "C" {
+        fn __alltraps();
+        fn __restore();
+    }
+    let restore_va = __restore as usize - __alltraps as usize + TRAMPOLINE;
+    unsafe {
+        asm!("jr {0}",
+            in(reg) restore_va,
+            in("a0")trap_cx_ptr,
+            in("a1")user_satp
+        );
+    }
+    panic!("Unreachable in back_to _user!");
+}
+
+pub use context::{TrapContext};
